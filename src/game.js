@@ -64,8 +64,10 @@ window.onload = function() {
 				if(!this.has("redWarrior")) this.addComponent("redWarrior");
 				
 				this.bind("click", function() {
-					currentPiece = this;
-					showMoveable();
+					if(currentPiece != this){
+						currentPiece = this;
+						showMoveable();
+					}
 				});
 				this.hp = 10;
 				this.range = 1;
@@ -99,8 +101,10 @@ window.onload = function() {
 				if(!this.has("redMage")) this.addComponent("redMage");
 				
 				this.bind("click", function() {
-					currentPiece = this;
-					showMoveable();
+					if(currentPiece != this){
+						currentPiece = this;
+						showMoveable();
+					}
 				});
 				this.hp = 10;
 				this.range = 1;
@@ -116,8 +120,8 @@ window.onload = function() {
 			
 			render: function(){
 				x$('#console').top('Rendering mage at x tile: ' + this.xTile + ' and y tile: ' + this.yTile);
-				this.attr({x: (this.xTile * 40)+4, y: (this.yTile * 40)-16, z: 3});
-				this.attr({x: (this.xTile * 40)+4, y: (this.yTile * 40)-16, z: 3});
+				this.attr({x: (this.xTile * 40)+4, y: (this.yTile * 40)-16, z: 7});
+				this.attr({x: (this.xTile * 40)+4, y: (this.yTile * 40)-16, z: 7});
 			},
 		});
 
@@ -147,10 +151,12 @@ window.onload = function() {
 			if(currentPiece) {
 				var column = Math.floor((e.clientX - Crafty.stage.x) / 40);
 				var row = Math.floor((e.clientY - Crafty.stage.y) / 40);
-				currentPiece.placeUnit(column, row, NORTH);
-				currentPiece = null;
-				for(var i=0;i<moveMask.length;i++){
-					moveMask[i].destroy();
+				if(!(currentPiece.xTile == column && currentPiece.yTile == row)){
+					currentPiece.placeUnit(column, row, NORTH);
+					currentPiece = null;
+					for(var i=0;i<moveMask.length;i++){
+						moveMask[i].destroy();
+					}
 				}
 			}
 		});
