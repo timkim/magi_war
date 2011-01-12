@@ -14,28 +14,113 @@ window.onload = function() {
 		water1: [1,4]
 	});
 	
+	Crafty.sprite(40,"assets/overlay.png",{
+		moveable: [0,0]
+	});
 	Crafty.sprite(54, "assets/red_army.png",{
 		redWarrior:[0,0],
 		redMage:[0,1]
 	});
 	
-	Crafty.sprite(36, "assets/blue_army.png",{
+	Crafty.sprite(54, "assets/blue_army.png",{
 		blueWarrior:[0,0],
 		blueMage:[0,1]
 	});
-	
+		
 	boards = [],
 	turn = 0,
 	NORTH = 0,
 	EAST = 1,
 	SOUTH = 2,
 	WEST = 3,
-	currentPiece = null;
+	currentPiece = null,
+	moveMask = [];
 	
 	var redPlayer = Crafty.e();
 	var bluePlayer = Crafty.e();
 	
 	Crafty.scene("game", function(){
+		Crafty.c("player", {
+			pieces: null,
+			currentPiece: null,
+			
+			init: function(){
+				this.pieces = [];
+				this.currentPiece = 0;
+			}
+			
+		});	
+		
+		Crafty.c("warrior",{
+			hp: null,
+			face: null,
+			range: null,
+			xTile: null,
+			yTile: null,
+			id: null,
+			
+			init: function(){
+				if(!this.has("2D")) this.addComponent("2D");
+				if(!this.has("redWarrior")) this.addComponent("redWarrior");
+				
+				this.bind("click", function() {
+					currentPiece = this;
+					showMoveable();
+				});
+				this.hp = 10;
+				this.range = 1;
+				this.placeUnit(0,0, NORTH);
+			},
+			
+			placeUnit: function(theXTile, theYTile, theFace){
+				this.xTile = theXTile;
+				this.yTile = theYTile;
+				this.face = theFace;
+				this.render();
+			},
+			
+			render: function(){
+				x$('#console').top('Rendering warrior at x tile: ' + this.xTile + ' and y tile: ' + this.yTile);
+				this.attr({x: (this.xTile * 40)+4, y: (this.yTile * 40)-16, z: 7});
+				this.attr({x: (this.xTile * 40)+4, y: (this.yTile * 40)-16, z: 7});
+			},
+		});
+		
+		Crafty.c("mage",{
+			hp: null,
+			face: null,
+			range: null,
+			xTile: null,
+			yTile: null,
+			id: null,
+			
+			init: function(){
+				if(!this.has("2D")) this.addComponent("2D");
+				if(!this.has("redMage")) this.addComponent("redMage");
+				
+				this.bind("click", function() {
+					currentPiece = this;
+					showMoveable();
+				});
+				this.hp = 10;
+				this.range = 1;
+				this.placeUnit(0,0, NORTH);
+			},
+			
+			placeUnit: function(theXTile, theYTile, theFace){
+				this.xTile = theXTile;
+				this.yTile = theYTile;
+				this.face = theFace;
+				this.render();
+			},
+			
+			render: function(){
+				x$('#console').top('Rendering mage at x tile: ' + this.xTile + ' and y tile: ' + this.yTile);
+				this.attr({x: (this.xTile * 40)+4, y: (this.yTile * 40)-16, z: 3});
+				this.attr({x: (this.xTile * 40)+4, y: (this.yTile * 40)-16, z: 3});
+			},
+		});
+
 		x$('#console').top("Starting new game");
 		//generate board
 		// TODO Make width and height into constants for tile size
@@ -55,60 +140,38 @@ window.onload = function() {
 		var testUnit = Crafty.e('canvas, warrior, mouse');
 		testUnit.placeUnit(1,1,NORTH);
 		
+		var testUnit2 = Crafty.e('canvas, mage, mouse');
+		testUnit2.placeUnit(2,1,NORTH);
+		
 		Crafty.addEvent(this, Crafty.stage.elem, "mousedown", function(e){
 			if(currentPiece) {
 				var column = Math.floor((e.clientX - Crafty.stage.x) / 40);
 				var row = Math.floor((e.clientY - Crafty.stage.y) / 40);
 				currentPiece.placeUnit(column, row, NORTH);
+				currentPiece = null;
+				for(var i=0;i<moveMask.length;i++){
+					moveMask[i].destroy();
+				}
 			}
 		});
+		
+		
 	});
 	
-
-	Crafty.c("player", {
-		pieces: null,
-		currentPiece: null,
-		
-		init: function(){
-			this.pieces = [];
-			this.currentPiece = 0;
+	function showMoveable(){
+		if(currentPiece){
+			moveMask[0] = Crafty.e('2D, canvas, moveable').attr({x: (currentPiece.xTile-1)*40, y: (currentPiece.yTile-1)*40, z: 4});
+			moveMask[1] = Crafty.e('2D, canvas, moveable').attr({x: (currentPiece.xTile)*40, y: (currentPiece.yTile-1)*40, z: 4});
+			moveMask[2] = Crafty.e('2D, canvas, moveable').attr({x: (currentPiece.xTile+1)*40, y: (currentPiece.yTile-1)*40, z: 4});
+			
+			moveMask[3] = Crafty.e('2D, canvas, moveable').attr({x: (currentPiece.xTile-1)*40, y: (currentPiece.yTile)*40, z: 4});
+			moveMask[4] = Crafty.e('2D, canvas, moveable').attr({x: (currentPiece.xTile+1)*40, y: (currentPiece.yTile)*40, z: 4});
+			
+			moveMask[5] = Crafty.e('2D, canvas, moveable').attr({x: (currentPiece.xTile-1)*40, y: (currentPiece.yTile+1)*40, z: 4});
+			moveMask[6] = Crafty.e('2D, canvas, moveable').attr({x: (currentPiece.xTile)*40, y: (currentPiece.yTile+1)*40, z: 4});
+			moveMask[7] = Crafty.e('2D, canvas, moveable').attr({x: (currentPiece.xTile+1)*40, y: (currentPiece.yTile+1)*40, z: 4});			
 		}
-		
-	});
-	
-	Crafty.c("warrior",{
-		hp: null,
-		face: null,
-		range: null,
-		xTile: null,
-		yTile: null,
-		id: null,
-		
-		init: function(){
-			if(!this.has("2D")) this.addComponent("2D");
-			if(!this.has("redWarrior")) this.addComponent("redWarrior");
-			this.bind("click", function() {
-				currentPiece = this;
-			});
-			this.hp = 10;
-			this.range = 1;
-			this.placeUnit(0,0, NORTH);
-		},
-		
-		placeUnit: function(theXTile, theYTile, theFace){
-			this.xTile = theXTile;
-			this.yTile = theYTile;
-			this.face = theFace;
-			this.render();
-		},
-		
-		render: function(){
-			x$('#console').top('Rendering unit at x tile: ' + this.xTile + ' and y tile: ' + this.yTile);
-			this.attr({x: (this.xTile * 40)+4, y: (this.yTile * 40)-16, z: 3});
-			this.attr({x: (this.xTile * 40)+4, y: (this.yTile * 40)-16, z: 3});
-		},
-	});
-	
+	}
 	function createRandomTerrain(){
 		var num = Math.floor(Math.random()*9);
 		var theTile = '';
