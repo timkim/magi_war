@@ -24,12 +24,13 @@ window.onload = function() {
 		blueMage:[0,1]
 	});
 	
-	var boards = [],
+	boards = [],
 	turn = 0,
 	NORTH = 0,
 	EAST = 1,
 	SOUTH = 2,
-	WEST = 3;
+	WEST = 3,
+	currentPiece = null;
 	
 	var redPlayer = Crafty.e();
 	var bluePlayer = Crafty.e();
@@ -46,16 +47,24 @@ window.onload = function() {
 					var theTile = createWalkableTerrain();
 					Crafty.e('2D, canvas,'+theTile).attr({x: i * 40, y: j * 40, z: 2});
 					
-					if(theTile == 'dirt0'){
-						Crafty.e('canvas, warrior').placeUnit(i,j);
-					}
+					
 				}
 
 			}
 		}
-
+		var testUnit = Crafty.e('canvas, warrior, mouse');
+		testUnit.placeUnit(1,1,NORTH);
+		
+		Crafty.addEvent(this, Crafty.stage.elem, "mousedown", function(e){
+			if(currentPiece) {
+				var column = Math.floor((e.clientX - Crafty.stage.x) / 40);
+				var row = Math.floor((e.clientY - Crafty.stage.y) / 40);
+				currentPiece.placeUnit(column, row, NORTH);
+			}
+		});
 	});
 	
+
 	Crafty.c("player", {
 		pieces: null,
 		currentPiece: null,
@@ -78,6 +87,9 @@ window.onload = function() {
 		init: function(){
 			if(!this.has("2D")) this.addComponent("2D");
 			if(!this.has("redWarrior")) this.addComponent("redWarrior");
+			this.bind("click", function() {
+				currentPiece = this;
+			});
 			this.hp = 10;
 			this.range = 1;
 			this.placeUnit(0,0, NORTH);
@@ -87,11 +99,11 @@ window.onload = function() {
 			this.xTile = theXTile;
 			this.yTile = theYTile;
 			this.face = theFace;
-			this.updateUnit();
+			this.render();
 		},
 		
-		updateUnit: function(){
-			x$('#console').top('Updating unit at x tile: ' + this.xTile + ' and y tile: ' + this.yTile);
+		render: function(){
+			x$('#console').top('Rendering unit at x tile: ' + this.xTile + ' and y tile: ' + this.yTile);
 			this.attr({x: (this.xTile * 40)+4, y: (this.yTile * 40)-16, z: 3});
 			this.attr({x: (this.xTile * 40)+4, y: (this.yTile * 40)-16, z: 3});
 		},
