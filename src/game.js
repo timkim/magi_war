@@ -26,7 +26,14 @@ window.onload = function() {
 		blueWarrior:[0,0],
 		blueMage:[0,1]
 	});
-		
+	
+	Crafty.sprite(10, "assets/blue_endturn.png",{
+		blue_endTurn:[0,0, 10, 3]
+	});
+	
+	Crafty.sprite(10, "assets/red_endturn.png",{
+		red_endTurn:[0,0, 10, 3]
+	});
 	boards = [[]],
 	gameBoardWidth = 400,
 	gameBoardHeight = 400,
@@ -38,7 +45,8 @@ window.onload = function() {
 	currentPiece = null,
 	moveMask = [],
 	consoleCount= 0,
-	selected = false;
+	selected = false,
+	button = [];
 	
 	var redPlayer = Crafty.e();
 	var bluePlayer = Crafty.e();
@@ -153,6 +161,12 @@ window.onload = function() {
 		var testUnit4 = Crafty.e('canvas, warrior, blue, mouse');
 		testUnit4.placeUnit(1,4,NORTH);
 				
+		button[0] = Crafty.e('canvas, 2D, red_endTurn, mouse').attr({x: 450, y: 50, z: 10});
+		button[0].bind('click',function(){
+			x$('#console').top(consoleCount++ + ' End turn');
+			changeTurn();
+		});
+		
 		Crafty.addEvent(this, Crafty.stage.elem, "mousedown", function(e){
 			x$('#console').top(consoleCount++ + ' Fired mouse down');
 			var column = Math.floor((e.clientX - Crafty.stage.x) / 40);
@@ -174,6 +188,17 @@ window.onload = function() {
 			}
 		});
 	});
+	
+	function changeTurn(){
+		if(turn){
+			button[0].removeComponent('blue_endTurn');
+			button[0].addComponent('red_endTurn');
+		}else{
+			button[0].removeComponent('red_endTurn');
+			button[0].addComponent('blue_endTurn');
+		}
+		turn = !turn;
+	}
 	
 	function createBoard(xTiles,yTiles){
 		var outerArray = [];
