@@ -1,5 +1,5 @@
 window.onload = function() {
-	Crafty.init(50,400,400);
+	Crafty.init(50,600,400);
 	Crafty.canvas();
 	
 	Crafty.sprite(40, "assets/terrain.png",{
@@ -28,6 +28,8 @@ window.onload = function() {
 	});
 		
 	boards = [[]],
+	gameBoardWidth = 400,
+	gameBoardHeight = 400,
 	turn = 0,
 	NORTH = 0,
 	EAST = 1,
@@ -47,38 +49,24 @@ window.onload = function() {
 		Crafty.c("player", {
 			pieces: null,
 			currentPiece: null,
-			
 			init: function(){
 				this.pieces = [];
 			}
-			
 		});	
 		
-		Crafty.c("warrior",{
+		Crafty.c("unit",{
 			hp: null,
+			maxHp:null,
 			face: null,
 			range: null,
 			xTile: null,
 			yTile: null,
 			id: null,
+			colour: null,
+			type: null,
 			
 			init: function(){
 				if(!this.has("2D")) this.addComponent("2D");
-				if(!this.has("redWarrior")) this.addComponent("redWarrior");
-				/*
-				this.bind("click", function() {
-					if(currentPiece == null){
-						x$('#console').top(consoleCount++ + ' Fired click on unit');
-						currentPiece = this;
-						showMoveable();
-					}
-				});
-				*/
-				this.hp = 10;
-				this.range = 1;
-				this.xTile = 0;
-				this.yTile = 0;
-				this.placeUnit(0,0, NORTH);
 			},
 			
 			placeUnit: function(theYTile, theXTile, theFace){
@@ -94,55 +82,45 @@ window.onload = function() {
 			},
 			
 			render: function(){
-				x$('#console').top(consoleCount++ + ' Rendering warrior at x tile: ' + this.xTile + ' and y tile: ' + this.yTile);
+				x$('#console').top(consoleCount++ + ' Rendering unit at x tile: ' + this.xTile + ' and y tile: ' + this.yTile);
 				this.attr({x: (this.xTile * 40)+4, y: (this.yTile * 40)-16, z: 7});
 				this.attr({x: (this.xTile * 40)+4, y: (this.yTile * 40)-16, z: 7});
+			},		
+			
+			setColour: function(){
+				if(this.has("red")){
+					this.colour = 'red';
+				}else{ 
+					this.colour = 'blue';
+				}			
+			},
+		});
+		
+		Crafty.c("warrior",{
+			init: function(){
+				if(!this.has("unit")) this.addComponent("unit");
+				this.setColour();
+				this.type = 'Warrior';
+				this.addComponent(this.colour + this.type);
+				this.hp = 10;
+				this.range = 1;
+				this.xTile = 0;
+				this.yTile = 0;
+				this.placeUnit(0,0, NORTH);
 			},
 		});
 		
 		Crafty.c("mage",{
-			hp: null,
-			face: null,
-			range: null,
-			xTile: null,
-			yTile: null,
-			id: null,
-			
 			init: function(){
-				if(!this.has("2D")) this.addComponent("2D");
-				if(!this.has("redMage")) this.addComponent("redMage");
-				/*
-				this.bind("click", function() {
-					if(currentPiece == null){
-						x$('#console').top(consoleCount++ + ' Fired click on unit');
-						currentPiece = this;
-						showMoveable();
-					}
-				});
-				*/
+				if(!this.has("unit")) this.addComponent("unit");
+				this.setColour();
+				this.type = 'Mage';
+				this.addComponent(this.colour + this.type);
 				this.hp = 10;
 				this.range = 1;
 				this.xTile = 0;
 				this.yTile = 0;
 				this.placeUnit(0,0, NORTH);
-			},
-			
-			placeUnit: function(theYTile, theXTile, theFace){
-				if(boards[theYTile][theXTile]==null)
-				{
-					boards[this.yTile][this.xTile] = null;
-					boards[theYTile][theXTile]=this;
-					this.xTile = theXTile;
-					this.yTile = theYTile;
-					this.face = theFace;
-					this.render();
-				}
-			},
-			
-			render: function(){
-				x$('#console').top(consoleCount++ + ' Rendering mage at x tile: ' + this.xTile + ' and y tile: ' + this.yTile);
-				this.attr({x: (this.xTile * 40)+4, y: (this.yTile * 40)-16, z: 7});
-				this.attr({x: (this.xTile * 40)+4, y: (this.yTile * 40)-16, z: 7});
 			},
 		});
 		// ***************** ENTITY DEFINITIONS ENDS ***************** 
@@ -159,18 +137,22 @@ window.onload = function() {
 				}else{
 					var theTile = createWalkableTerrain();
 					Crafty.e('2D, canvas,'+theTile).attr({x: i * 40, y: j * 40, z: 2});
-					
-					
 				}
 
 			}
 		}
-		var testUnit = Crafty.e('canvas, warrior, mouse');
+		var testUnit = Crafty.e('canvas, warrior, red, mouse');
 		testUnit.placeUnit(1,1,NORTH);
 		
-		var testUnit2 = Crafty.e('canvas, mage, mouse');
+		var testUnit2 = Crafty.e('canvas, mage, red, mouse');
 		testUnit2.placeUnit(1,2,NORTH);
 		
+		var testUnit3 = Crafty.e('canvas, mage, blue, mouse');
+		testUnit3.placeUnit(1,3,NORTH);
+
+		var testUnit4 = Crafty.e('canvas, warrior, blue, mouse');
+		testUnit4.placeUnit(1,4,NORTH);
+				
 		Crafty.addEvent(this, Crafty.stage.elem, "mousedown", function(e){
 			x$('#console').top(consoleCount++ + ' Fired mouse down');
 			var column = Math.floor((e.clientX - Crafty.stage.x) / 40);
@@ -182,25 +164,15 @@ window.onload = function() {
 				currentPiece = null;
 			}else{
 				// focus on selected unit
-				currentPiece = boards[row][column];
-				
-			}
-			/*
-			if(currentPiece) {
-				x$('#console').top(consoleCount++ + ' Fired mouse down');
-				var column = Math.floor((e.clientX - Crafty.stage.x) / 40);
-				var row = Math.floor((e.clientY - Crafty.stage.y) / 40);
-				if(!(currentPiece.xTile == column && currentPiece.yTile == row)){
-					currentPiece.placeUnit(column, row, NORTH);
-					for(var i=0;i<moveMask.length;i++){
-						moveMask[i].destroy();
+				if(boards[row][column]!=null){
+					if(turn == 0 && boards[row][column].colour=='red'){
+						currentPiece = boards[row][column];
+					}else if(turn == 1 && boards[row][column].colour=='blue'){
+						currentPiece = boards[row][column];
 					}
-					currentPiece = null;
 				}
-			}*/
+			}
 		});
-		
-		
 	});
 	
 	function createBoard(xTiles,yTiles){
