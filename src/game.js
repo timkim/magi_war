@@ -27,26 +27,29 @@ window.onload = function() {
 		blueMage:[0,1]
 	});
 		
-	boards = [],
+	boards = [[]],
 	turn = 0,
 	NORTH = 0,
 	EAST = 1,
 	SOUTH = 2,
 	WEST = 3,
 	currentPiece = null,
-	moveMask = [];
+	moveMask = [],
+	consoleCount= 0,
+	selected = false;
 	
 	var redPlayer = Crafty.e();
 	var bluePlayer = Crafty.e();
 	
 	Crafty.scene("game", function(){
+	
+		// ***************** ENTITY DEFINITIONS START ***************** 
 		Crafty.c("player", {
 			pieces: null,
 			currentPiece: null,
 			
 			init: function(){
 				this.pieces = [];
-				this.currentPiece = 0;
 			}
 			
 		});	
@@ -62,27 +65,36 @@ window.onload = function() {
 			init: function(){
 				if(!this.has("2D")) this.addComponent("2D");
 				if(!this.has("redWarrior")) this.addComponent("redWarrior");
-				
+				/*
 				this.bind("click", function() {
-					if(currentPiece != this){
+					if(currentPiece == null){
+						x$('#console').top(consoleCount++ + ' Fired click on unit');
 						currentPiece = this;
 						showMoveable();
 					}
 				});
+				*/
 				this.hp = 10;
 				this.range = 1;
+				this.xTile = 0;
+				this.yTile = 0;
 				this.placeUnit(0,0, NORTH);
 			},
 			
-			placeUnit: function(theXTile, theYTile, theFace){
-				this.xTile = theXTile;
-				this.yTile = theYTile;
-				this.face = theFace;
-				this.render();
+			placeUnit: function(theYTile, theXTile, theFace){
+				if(boards[theYTile][theXTile]==null)
+				{
+					boards[this.yTile][this.xTile] = null;
+					boards[theYTile][theXTile]=this;
+					this.xTile = theXTile;
+					this.yTile = theYTile;
+					this.face = theFace;
+					this.render();
+				}
 			},
 			
 			render: function(){
-				x$('#console').top('Rendering warrior at x tile: ' + this.xTile + ' and y tile: ' + this.yTile);
+				x$('#console').top(consoleCount++ + ' Rendering warrior at x tile: ' + this.xTile + ' and y tile: ' + this.yTile);
 				this.attr({x: (this.xTile * 40)+4, y: (this.yTile * 40)-16, z: 7});
 				this.attr({x: (this.xTile * 40)+4, y: (this.yTile * 40)-16, z: 7});
 			},
@@ -99,35 +111,47 @@ window.onload = function() {
 			init: function(){
 				if(!this.has("2D")) this.addComponent("2D");
 				if(!this.has("redMage")) this.addComponent("redMage");
-				
+				/*
 				this.bind("click", function() {
-					if(currentPiece != this){
+					if(currentPiece == null){
+						x$('#console').top(consoleCount++ + ' Fired click on unit');
 						currentPiece = this;
 						showMoveable();
 					}
 				});
+				*/
 				this.hp = 10;
 				this.range = 1;
+				this.xTile = 0;
+				this.yTile = 0;
 				this.placeUnit(0,0, NORTH);
 			},
 			
-			placeUnit: function(theXTile, theYTile, theFace){
-				this.xTile = theXTile;
-				this.yTile = theYTile;
-				this.face = theFace;
-				this.render();
+			placeUnit: function(theYTile, theXTile, theFace){
+				if(boards[theYTile][theXTile]==null)
+				{
+					boards[this.yTile][this.xTile] = null;
+					boards[theYTile][theXTile]=this;
+					this.xTile = theXTile;
+					this.yTile = theYTile;
+					this.face = theFace;
+					this.render();
+				}
 			},
 			
 			render: function(){
-				x$('#console').top('Rendering mage at x tile: ' + this.xTile + ' and y tile: ' + this.yTile);
+				x$('#console').top(consoleCount++ + ' Rendering mage at x tile: ' + this.xTile + ' and y tile: ' + this.yTile);
 				this.attr({x: (this.xTile * 40)+4, y: (this.yTile * 40)-16, z: 7});
 				this.attr({x: (this.xTile * 40)+4, y: (this.yTile * 40)-16, z: 7});
 			},
 		});
-
+		// ***************** ENTITY DEFINITIONS ENDS ***************** 
+		
+		
 		x$('#console').top("Starting new game");
 		//generate board
 		// TODO Make width and height into constants for tile size
+		createBoard(10,10);
 		for(var i = 0; i < 10; i++){
 			for(var j = 0; j < 10; j++){
 				if(i==0 || i==9 || j ==0 || j==9){
@@ -145,24 +169,51 @@ window.onload = function() {
 		testUnit.placeUnit(1,1,NORTH);
 		
 		var testUnit2 = Crafty.e('canvas, mage, mouse');
-		testUnit2.placeUnit(2,1,NORTH);
+		testUnit2.placeUnit(1,2,NORTH);
 		
 		Crafty.addEvent(this, Crafty.stage.elem, "mousedown", function(e){
+			x$('#console').top(consoleCount++ + ' Fired mouse down');
+			var column = Math.floor((e.clientX - Crafty.stage.x) / 40);
+			var row = Math.floor((e.clientY - Crafty.stage.y) / 40);
+			
+			if(currentPiece){
+				// move selected unit 
+				currentPiece.placeUnit(row,column);
+				currentPiece = null;
+			}else{
+				// focus on selected unit
+				currentPiece = boards[row][column];
+				
+			}
+			/*
 			if(currentPiece) {
+				x$('#console').top(consoleCount++ + ' Fired mouse down');
 				var column = Math.floor((e.clientX - Crafty.stage.x) / 40);
 				var row = Math.floor((e.clientY - Crafty.stage.y) / 40);
 				if(!(currentPiece.xTile == column && currentPiece.yTile == row)){
 					currentPiece.placeUnit(column, row, NORTH);
-					currentPiece = null;
 					for(var i=0;i<moveMask.length;i++){
 						moveMask[i].destroy();
 					}
+					currentPiece = null;
 				}
-			}
+			}*/
 		});
 		
 		
 	});
+	
+	function createBoard(xTiles,yTiles){
+		var outerArray = [];
+		for(var i=0;i<xTiles;i++){
+			var innerArray = [];
+			for(var j=0;j<yTiles;j++){
+				innerArray[j] = null;
+			}
+			outerArray[i] = innerArray;
+		}
+		boards = outerArray;
+	}
 	
 	function showMoveable(){
 		if(currentPiece){
