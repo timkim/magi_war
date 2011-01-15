@@ -15,7 +15,7 @@ window.onload = function() {
 	});
 	
 	Crafty.sprite(40,"assets/overlay.png",{
-		moveable: [0,0]
+		blue_overlay: [0,0]
 	});
 	Crafty.sprite(54, "assets/red_army.png",{
 		redWarrior:[0,0],
@@ -34,9 +34,12 @@ window.onload = function() {
 	Crafty.sprite(10, "assets/red_endturn.png",{
 		red_endTurn:[0,0, 10, 3]
 	});
-	boards = [[]],
+	unitBoard = [[]],
+	terrainBoard = [[]],
 	gameBoardWidth = 400,
 	gameBoardHeight = 400,
+	gameBoardTileWidth = 10,
+	gameBoardTileHeight = 10,
 	turn = 0,
 	NORTH = 0,
 	EAST = 1,
@@ -72,16 +75,17 @@ window.onload = function() {
 			id: null,
 			colour: null,
 			type: null,
+			movePoints: null,
 			
 			init: function(){
 				if(!this.has("2D")) this.addComponent("2D");
 			},
 			
 			placeUnit: function(theYTile, theXTile, theFace){
-				if(boards[theYTile][theXTile]==null)
+				if(unitBoard[theYTile][theXTile]==null)
 				{
-					boards[this.yTile][this.xTile] = null;
-					boards[theYTile][theXTile]=this;
+					unitBoard[this.yTile][this.xTile] = null;
+					unitBoard[theYTile][theXTile]=this;
 					this.xTile = theXTile;
 					this.yTile = theYTile;
 					this.face = theFace;
@@ -102,6 +106,38 @@ window.onload = function() {
 					this.colour = 'blue';
 				}			
 			},
+			
+			findMoveRange: function(){
+				var theMoveRange = [];
+				// find distances orthogonal to position
+				if(this.yTile - 1 >= 0){
+					// gotta check for units and walkable terrain
+					if(unitBoard[this.yTile - 1][this.xTile]== null){
+						theMoveRange.push([this.yTile - 1, this.xTile]);
+					}
+				}
+				
+				if(this.yTile + 1 <= gameBoardTileHeight){
+					if(unitBoard[this.yTile + 1][this.xTile]== null){
+						theMoveRange.push([this.yTile + 1, this.xTile]);
+					}					
+				}
+				
+				if(this.xTile - 1 >= 0){
+					// gotta check for units and walkable terrain
+					if(unitBoard[this.yTile][this.xTile-1]== null){
+						theMoveRange.push([this.yTile, this.xTile-1]);
+					}
+				}
+				
+				if(this.xTile + 1 <= gameBoardTileWidth){
+					if(unitBoard[this.yTile][this.xTile+1]== null){
+						theMoveRange.push([this.yTile, this.xTile+1]);
+					}					
+				}
+				
+				return theMoveRange;
+			},
 		});
 		
 		Crafty.c("warrior",{
@@ -112,6 +148,7 @@ window.onload = function() {
 				this.addComponent(this.colour + this.type);
 				this.hp = 10;
 				this.range = 1;
+				this.movePoints = 1;
 				this.xTile = 0;
 				this.yTile = 0;
 				this.placeUnit(0,0, NORTH);
@@ -126,6 +163,7 @@ window.onload = function() {
 				this.addComponent(this.colour + this.type);
 				this.hp = 10;
 				this.range = 1;
+				this.movePoints = 1;
 				this.xTile = 0;
 				this.yTile = 0;
 				this.placeUnit(0,0, NORTH);
@@ -137,13 +175,16 @@ window.onload = function() {
 		x$('#console').top("Starting new game");
 		//generate board
 		// TODO Make width and height into constants for tile size
-		createBoard(10,10);
+		unitBoard = initBoardValues(10,10);
+		terrainBoard = initBoardValues(10,10);
 		for(var i = 0; i < 10; i++){
 			for(var j = 0; j < 10; j++){
 				if(i==0 || i==9 || j ==0 || j==9){
+					terrainBoard[i][j] = 'lava0';
 					Crafty.e('2D, canvas,lava0').attr({x: i * 40, y: j * 40, z: 2});
 				}else{
 					var theTile = createWalkableTerrain();
+					terrainBoard[i][j] = theTile;
 					Crafty.e('2D, canvas,'+theTile).attr({x: i * 40, y: j * 40, z: 2});
 				}
 
@@ -175,14 +216,19 @@ window.onload = function() {
 			if(currentPiece){
 				// move selected unit 
 				currentPiece.placeUnit(row,column);
+				for(var i=0;i<moveMask.length;i++){
+					moveMask[i].destroy();
+				}
 				currentPiece = null;
 			}else{
 				// focus on selected unit
-				if(boards[row][column]!=null){
-					if(turn == 0 && boards[row][column].colour=='red'){
-						currentPiece = boards[row][column];
-					}else if(turn == 1 && boards[row][column].colour=='blue'){
-						currentPiece = boards[row][column];
+				if(unitBoard[row][column]!=null){
+					if(turn == 0 && unitBoard[row][column].colour=='red'){
+						currentPiece = unitBoard[row][column];
+						showMoveable(currentPiece.findMoveRange());
+					}else if(turn == 1 && unitBoard[row][column].colour=='blue'){
+						currentPiece = unitBoard[row][column];
+						showMoveable(currentPiece.findMoveRange());
 					}
 				}
 			}
@@ -200,7 +246,7 @@ window.onload = function() {
 		turn = !turn;
 	}
 	
-	function createBoard(xTiles,yTiles){
+	function initBoardValues(xTiles,yTiles){
 		var outerArray = [];
 		for(var i=0;i<xTiles;i++){
 			var innerArray = [];
@@ -209,21 +255,14 @@ window.onload = function() {
 			}
 			outerArray[i] = innerArray;
 		}
-		boards = outerArray;
+		return outerArray;
 	}
 	
-	function showMoveable(){
+	function showMoveable(movementArray){
 		if(currentPiece){
-			moveMask[0] = Crafty.e('2D, canvas, moveable').attr({x: (currentPiece.xTile-1)*40, y: (currentPiece.yTile-1)*40, z: 4});
-			moveMask[1] = Crafty.e('2D, canvas, moveable').attr({x: (currentPiece.xTile)*40, y: (currentPiece.yTile-1)*40, z: 4});
-			moveMask[2] = Crafty.e('2D, canvas, moveable').attr({x: (currentPiece.xTile+1)*40, y: (currentPiece.yTile-1)*40, z: 4});
-			
-			moveMask[3] = Crafty.e('2D, canvas, moveable').attr({x: (currentPiece.xTile-1)*40, y: (currentPiece.yTile)*40, z: 4});
-			moveMask[4] = Crafty.e('2D, canvas, moveable').attr({x: (currentPiece.xTile+1)*40, y: (currentPiece.yTile)*40, z: 4});
-			
-			moveMask[5] = Crafty.e('2D, canvas, moveable').attr({x: (currentPiece.xTile-1)*40, y: (currentPiece.yTile+1)*40, z: 4});
-			moveMask[6] = Crafty.e('2D, canvas, moveable').attr({x: (currentPiece.xTile)*40, y: (currentPiece.yTile+1)*40, z: 4});
-			moveMask[7] = Crafty.e('2D, canvas, moveable').attr({x: (currentPiece.xTile+1)*40, y: (currentPiece.yTile+1)*40, z: 4});			
+			for(var i=0;i<movementArray.length;i++){
+				moveMask.push(Crafty.e('2D, canvas, blue_overlay').attr({x: (movementArray[i][1])*40, y: (movementArray[i][0])*40, z: 4}));
+			}
 		}
 	}
 	function createRandomTerrain(){
