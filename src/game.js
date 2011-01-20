@@ -49,7 +49,8 @@ window.onload = function() {
 	moveMask = [],
 	consoleCount= 0,
 	selected = false,
-	button = [];
+	button = [],
+	moveRange = null;
 	
 	var redPlayer = Crafty.e();
 	var bluePlayer = Crafty.e();
@@ -84,6 +85,7 @@ window.onload = function() {
 			placeUnit: function(theYTile, theXTile, theFace){
 				if(unitBoard[theYTile][theXTile]==null)
 				{
+					this.movePoints -= this.getDistanceToTile(theXTile, theYTile);
 					unitBoard[this.yTile][this.xTile] = null;
 					unitBoard[theYTile][theXTile]=this;
 					this.xTile = theXTile;
@@ -109,34 +111,47 @@ window.onload = function() {
 			
 			findMoveRange: function(){
 				var theMoveRange = [];
+				var theMinMoveRange = Math.min(this.range, this.movePoints);
 				// find distances orthogonal to position
-				if(this.yTile - 1 >= 0){
+				if(this.yTile - theMinMoveRange >= 0){
 					// gotta check for units and walkable terrain
-					if(unitBoard[this.yTile - 1][this.xTile]== null){
-						theMoveRange.push([this.yTile - 1, this.xTile]);
+					if(unitBoard[this.yTile - theMinMoveRange][this.xTile]== null){
+						theMoveRange.push([this.yTile - theMinMoveRange, this.xTile]);
 					}
 				}
 				
-				if(this.yTile + 1 <= gameBoardTileHeight){
-					if(unitBoard[this.yTile + 1][this.xTile]== null){
-						theMoveRange.push([this.yTile + 1, this.xTile]);
+				if(this.yTile + theMinMoveRange <= gameBoardTileHeight){
+					if(unitBoard[this.yTile + theMinMoveRange][this.xTile]== null){
+						theMoveRange.push([this.yTile + theMinMoveRange, this.xTile]);
 					}					
 				}
 				
-				if(this.xTile - 1 >= 0){
+				if(this.xTile - theMinMoveRange >= 0){
 					// gotta check for units and walkable terrain
-					if(unitBoard[this.yTile][this.xTile-1]== null){
-						theMoveRange.push([this.yTile, this.xTile-1]);
+					if(unitBoard[this.yTile][this.xTile-theMinMoveRange]== null){
+						theMoveRange.push([this.yTile, this.xTile-theMinMoveRange]);
 					}
 				}
 				
-				if(this.xTile + 1 <= gameBoardTileWidth){
-					if(unitBoard[this.yTile][this.xTile+1]== null){
-						theMoveRange.push([this.yTile, this.xTile+1]);
+				if(this.xTile + theMinMoveRange <= gameBoardTileWidth){
+					if(unitBoard[this.yTile][this.xTile+theMinMoveRange]== null){
+						theMoveRange.push([this.yTile, this.xTile+theMinMoveRange]);
 					}					
 				}
 				
 				return theMoveRange;
+			},
+			
+			getDistanceToTile:function(theTileRow, theTileColumn){
+				var move = 0;
+				move += Math.abs(this.xTile - theTileRow);
+				move += Math.abs(this.yTile - theTileColumn);
+				return move;
+			},
+			
+			resetMovePoints:function()
+			{
+				this.movePoints = this.range;
 			},
 		});
 		
@@ -202,6 +217,8 @@ window.onload = function() {
 		var testUnit4 = Crafty.e('canvas, warrior, blue, mouse');
 		testUnit4.placeUnit(1,4,NORTH);
 				
+		resetAllUnitsMovePoints();
+		
 		button[0] = Crafty.e('canvas, 2D, red_endTurn, mouse').attr({x: 450, y: 50, z: 10});
 		button[0].bind('click',function(){
 			x$('#console').top(consoleCount++ + ' End turn');
@@ -213,27 +230,58 @@ window.onload = function() {
 			var column = Math.floor((e.clientX - Crafty.stage.x) / 40);
 			var row = Math.floor((e.clientY - Crafty.stage.y) / 40);
 			
+			
 			if(currentPiece){
 				// move selected unit 
-				currentPiece.placeUnit(row,column);
-				for(var i=0;i<moveMask.length;i++){
-					moveMask[i].destroy();
+				if(checkMovement(row, column, moveRange)){
+					currentPiece.placeUnit(row,column);
+					destroyMoveOverlay();
+					currentPiece = null;
 				}
-				currentPiece = null;
 			}else{
 				// focus on selected unit
 				if(unitBoard[row][column]!=null){
 					if(turn == 0 && unitBoard[row][column].colour=='red'){
 						currentPiece = unitBoard[row][column];
-						showMoveable(currentPiece.findMoveRange());
+						moveRange = currentPiece.findMoveRange();
+						(moveRange.length>0)?showMoveable(moveRange):currentPiece = null;
+						
 					}else if(turn == 1 && unitBoard[row][column].colour=='blue'){
 						currentPiece = unitBoard[row][column];
-						showMoveable(currentPiece.findMoveRange());
+						moveRange = currentPiece.findMoveRange();
+						(moveRange.length>0)?showMoveable(moveRange):currentPiece = null;
 					}
 				}
 			}
 		});
 	});
+	function resetAllUnitsMovePoints(){
+		// gonna need a unit array to just go through instead of double looping
+		for(var i=0;i<unitBoard.length;i++){
+			for(var j=0;j<unitBoard[i].length;j++){
+				if(unitBoard[i][j]!=null){
+					unitBoard[i][j].resetMovePoints();
+				}
+			}
+		}
+	}
+	
+	function destroyMoveOverlay(){
+		for(var i=0;i<moveMask.length;i++){
+			moveMask[i].destroy();
+		}	
+	}
+	
+	function checkMovement(rowClicked,columnClicked, movementArray){
+		var flag = false;
+		for(var i=0;i<movementArray.length;i++){
+			if(movementArray[i][0] == rowClicked && movementArray[i][1] == columnClicked){
+				flag = true;
+				break;
+			}
+		}
+		return flag;
+	}
 	
 	function changeTurn(){
 		if(turn){
@@ -244,6 +292,9 @@ window.onload = function() {
 			button[0].addComponent('blue_endTurn');
 		}
 		turn = !turn;
+		destroyMoveOverlay();
+		currentPiece = null;
+		resetAllUnitsMovePoints();
 	}
 	
 	function initBoardValues(xTiles,yTiles){
