@@ -232,8 +232,14 @@ window.onload = function() {
 			
 			
 			if(currentPiece){
-				// move selected unit 
+				// unselect unit
+				if(unitBoard[row][column]==currentPiece){
+					destroyMoveOverlay();
+					currentPiece = null;
+				}
+				
 				if(checkMovement(row, column, moveRange)){
+				// move selected unit 
 					currentPiece.placeUnit(row,column);
 					destroyMoveOverlay();
 					currentPiece = null;
