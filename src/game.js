@@ -17,6 +17,11 @@ window.onload = function() {
 	Crafty.sprite(40,"assets/overlay.png",{
 		blue_overlay: [0,0]
 	});
+	
+	Crafty.sprite(40,"assets/red_overlay.png",{
+		red_overlay: [0,0]
+	});
+	
 	Crafty.sprite(54, "assets/red_army.png",{
 		redWarrior:[0,0],
 		redMage:[0,1]
@@ -46,11 +51,13 @@ window.onload = function() {
 	SOUTH = 2,
 	WEST = 3,
 	currentPiece = null,
-	moveMask = [],
+	moveMask = []
+	attackMask = [],
 	consoleCount= 0,
 	selected = false,
 	button = [],
-	moveRange = null;
+	moveRange = null,
+	attackRange = null;
 	
 	var redPlayer = Crafty.e();
 	var bluePlayer = Crafty.e();
@@ -141,6 +148,46 @@ window.onload = function() {
 				
 				return theMoveRange;
 			},
+            
+            findAttackRange: function(){
+                var theAttackRange = [];
+  				// find distances orthogonal to position
+				if(this.yTile - 1 >= 0){
+					// gotta check for units and walkable terrain
+					if(unitBoard[this.yTile - 1][this.xTile]!= null){
+                        if(unitBoard[this.yTile - 1][this.xTile].colour != this.colour){
+                            theAttackRange.push([this.yTile - 1, this.xTile]);
+                        }
+					}
+				}
+				
+				if(this.yTile + 1 <= gameBoardTileHeight){
+					if(unitBoard[this.yTile + 1][this.xTile]!= null){
+                        if(unitBoard[this.yTile + 1][this.xTile].colour != this.colour){
+                            theAttackRange.push([this.yTile + 1, this.xTile]);
+                        }
+					}					
+				}
+				
+				if(this.xTile - 1 >= 0){
+					// gotta check for units and walkable terrain
+					if(unitBoard[this.yTile][this.xTile-1]!= null){
+                        if(unitBoard[this.yTile][this.xTile-1].colour != this.colour){
+                            theAttackRange.push([this.yTile, this.xTile-1]);
+                        }
+					}
+				}
+				
+				if(this.xTile + 1 <= gameBoardTileWidth){
+					if(unitBoard[this.yTile][this.xTile+1]!= null){
+                        if(unitBoard[this.yTile][this.xTile+1].colour != this.colour){
+                            theAttackRange.push([this.yTile, this.xTile+1]);
+                        }
+					}					
+				}
+				
+				return theAttackRange;              
+            },
 			
 			getDistanceToTile:function(theTileRow, theTileColumn){
 				var move = 0;
@@ -251,11 +298,19 @@ window.onload = function() {
 						currentPiece = unitBoard[row][column];
 						moveRange = currentPiece.findMoveRange();
 						(moveRange.length>0)?showMoveable(moveRange):currentPiece = null;
+                        if(currentPiece){
+                            attackRange = currentPiece.findAttackRange();
+                            if(attackRange.length>0)showAttackable(attackRange);
+                        }
 						
 					}else if(turn == 1 && unitBoard[row][column].colour=='blue'){
 						currentPiece = unitBoard[row][column];
 						moveRange = currentPiece.findMoveRange();
 						(moveRange.length>0)?showMoveable(moveRange):currentPiece = null;
+                        if(currentPiece){
+                            attackRange = currentPiece.findAttackRange();
+                            if(attackRange.length>0)showAttackable(attackRange);
+                        }
 					}
 				}
 			}
@@ -322,6 +377,15 @@ window.onload = function() {
 			}
 		}
 	}
+    
+    function showAttackable(attackArray){
+ 		if(currentPiece){
+			for(var i=0;i<attackArray.length;i++){
+				moveMask.push(Crafty.e('2D, canvas, red_overlay').attr({x: (attackArray[i][1])*40, y: (attackArray[i][0])*40, z: 4}));
+			}
+		}   
+    }
+    
 	function createRandomTerrain(){
 		var num = Math.floor(Math.random()*9);
 		var theTile = '';
