@@ -101,11 +101,24 @@ window.onload = function() {
 					this.render();
 				}
 			},
-			
+            attack: function(){
+                this.movePoints = 0;
+            },
+            
+			hurt: function(damage){
+                this.hp -= damage;
+                this.render();
+            },
 			render: function(){
-				x$('#console').top(consoleCount++ + ' Rendering unit at x tile: ' + this.xTile + ' and y tile: ' + this.yTile);
-				this.attr({x: (this.xTile * 40)+4, y: (this.yTile * 40)-16, z: 7});
-				this.attr({x: (this.xTile * 40)+4, y: (this.yTile * 40)-16, z: 7});
+                if(this.hp>0){
+                    x$('#console').top(consoleCount++ + ' Rendering unit at x tile: ' + this.xTile + ' and y tile: ' + this.yTile);
+                    this.attr({x: (this.xTile * 40)+4, y: (this.yTile * 40)-16, z: 7});
+                    this.attr({x: (this.xTile * 40)+4, y: (this.yTile * 40)-16, z: 7});
+                }else{
+                    unitBoard[this.yTile][this.xTile] = null;
+                    this.destroy();
+                    x$('#console').top(consoleCount++ + ' Dead unit at x tile: ' + this.xTile + ' and y tile: ' + this.yTile);
+                }
 			},		
 			
 			setColour: function(){
@@ -291,6 +304,14 @@ window.onload = function() {
 					destroyMoveOverlay();
 					currentPiece = null;
 				}
+                
+                if(checkAttack(row,column, attackRange)){
+ 				// attack selected unit 
+                    currentPiece.attack();
+					unitBoard[row][column].hurt(10);
+					destroyMoveOverlay();
+					currentPiece = null;               
+                }
 			}else{
 				// focus on selected unit
 				if(unitBoard[row][column]!=null){
@@ -343,6 +364,17 @@ window.onload = function() {
 		}
 		return flag;
 	}
+    
+    function checkAttack(rowClicked, columnClicked, attackArray){
+ 		var flag = false;
+		for(var i=0;i<attackArray.length;i++){
+			if(attackArray[i][0] == rowClicked && attackArray[i][1] == columnClicked){
+				flag = true;
+				break;
+			}
+		}
+		return flag;   
+    }
 	
 	function changeTurn(){
 		if(turn){
