@@ -39,6 +39,10 @@ window.onload = function() {
 	Crafty.sprite(10, "assets/red_endturn.png",{
 		red_endTurn:[0,0, 10, 3]
 	});
+    
+    Crafty.sprite(100, "assets/sidebar.png",{
+        sideBar:[0,0,2,4]
+    });
 	unitBoard = [[]],
 	terrainBoard = [[]],
 	gameBoardWidth = 400,
@@ -54,10 +58,10 @@ window.onload = function() {
 	moveMask = []
 	attackMask = [],
 	consoleCount= 0,
-	selected = false,
 	button = [],
 	moveRange = null,
-	attackRange = null;
+	attackRange = null
+    sideBar = null,test = null;
 	
 	var redPlayer = Crafty.e();
 	var bluePlayer = Crafty.e();
@@ -135,26 +139,26 @@ window.onload = function() {
 				// find distances orthogonal to position
 				if(this.yTile - theMinMoveRange >= 0){
 					// gotta check for units and walkable terrain
-					if(unitBoard[this.yTile - theMinMoveRange][this.xTile]== null){
+					if(unitBoard[this.yTile - theMinMoveRange][this.xTile]== null && terrainBoard[this.yTile - theMinMoveRange][this.xTile].indexOf('lava')<0){
 						theMoveRange.push([this.yTile - theMinMoveRange, this.xTile]);
 					}
 				}
 				
 				if(this.yTile + theMinMoveRange <= gameBoardTileHeight){
-					if(unitBoard[this.yTile + theMinMoveRange][this.xTile]== null){
+					if(unitBoard[this.yTile + theMinMoveRange][this.xTile]== null && terrainBoard[this.yTile + theMinMoveRange][this.xTile].indexOf('lava')<0){
 						theMoveRange.push([this.yTile + theMinMoveRange, this.xTile]);
 					}					
 				}
 				
 				if(this.xTile - theMinMoveRange >= 0){
 					// gotta check for units and walkable terrain
-					if(unitBoard[this.yTile][this.xTile-theMinMoveRange]== null){
+					if(unitBoard[this.yTile][this.xTile-theMinMoveRange]== null && terrainBoard[this.yTile][this.xTile - theMinMoveRange].indexOf('lava')<0){
 						theMoveRange.push([this.yTile, this.xTile-theMinMoveRange]);
 					}
 				}
 				
 				if(this.xTile + theMinMoveRange <= gameBoardTileWidth){
-					if(unitBoard[this.yTile][this.xTile+theMinMoveRange]== null){
+					if(unitBoard[this.yTile][this.xTile+theMinMoveRange]== null && terrainBoard[this.yTile][this.xTile + theMinMoveRange].indexOf('lava')<0){
 						theMoveRange.push([this.yTile, this.xTile+theMinMoveRange]);
 					}					
 				}
@@ -279,12 +283,14 @@ window.onload = function() {
 				
 		resetAllUnitsMovePoints();
 		
-		button[0] = Crafty.e('canvas, 2D, red_endTurn, mouse').attr({x: 450, y: 50, z: 10});
+		button[0] = Crafty.e('canvas, 2D, red_endTurn, mouse').attr({x: 450, y: 370, z: 10});
 		button[0].bind('click',function(){
 			x$('#console').top(consoleCount++ + ' End turn');
 			changeTurn();
 		});
 		
+        sideBar = Crafty.e('canvas,2D, sideBar').attr({x:400, y:0,z:0});
+        test = Crafty.e("2D, DOM, text").attr({x: 220, y: 200}).text("hello").font("30pt Arial");
 		Crafty.addEvent(this, Crafty.stage.elem, "mousedown", function(e){
 			x$('#console').top(consoleCount++ + ' Fired mouse down');
 			var column = Math.floor((e.clientX - Crafty.stage.x) / 40);
