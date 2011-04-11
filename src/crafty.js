@@ -1684,6 +1684,7 @@ Crafty.c("color", {
 		this.bind("draw", function(e) {
 			if(e.type === "DOM") {
 				e.style.background = this._color;
+				e.style.color = this._color;
 				e.style.lineHeight = 0;
 			} else if(e.type === "canvas") {
 				if(this._color) Crafty.context.fillStyle = this._color;

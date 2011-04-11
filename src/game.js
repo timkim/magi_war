@@ -32,6 +32,11 @@ window.onload = function() {
 		blueMage:[0,1]
 	});
 	
+	Crafty.sprite(54, "assets/grey_army.png",{
+		greyWarrior:[0,0],
+		greyMage:[0,1]
+	});
+	
 	Crafty.sprite(10, "assets/blue_endturn.png",{
 		blue_endTurn:[0,0, 10, 3]
 	});
@@ -61,11 +66,13 @@ window.onload = function() {
 	button = [],
 	moveRange = null,
 	attackRange = null
-    sideBar = null,test = null;
+    sideBar = null,
+	hpText = null,
+	unitSelectText = null,
+    test = null;
 	
 	var redPlayer = Crafty.e();
 	var bluePlayer = Crafty.e();
-	
 	Crafty.scene("game", function(){
 	
 		// ***************** ENTITY DEFINITIONS START ***************** 
@@ -103,8 +110,15 @@ window.onload = function() {
 					this.yTile = theYTile;
 					this.face = theFace;
 					this.render();
+					//this.imgToGreyScale();
 				}
 			},
+			
+			greyOut: function(){
+				this.removeComponent(this.colour+this.type);
+				this.addComponent('grey'+this.type);
+			},
+			
             attack: function(){
                 this.movePoints = 0;
             },
@@ -226,6 +240,7 @@ window.onload = function() {
 				this.type = 'Warrior';
 				this.addComponent(this.colour + this.type);
 				this.hp = 10;
+				this.maxHp = 10;
 				this.range = 1;
 				this.movePoints = 1;
 				this.xTile = 0;
@@ -241,6 +256,7 @@ window.onload = function() {
 				this.type = 'Mage';
 				this.addComponent(this.colour + this.type);
 				this.hp = 10;
+				this.maxHp = 10;
 				this.range = 1;
 				this.movePoints = 1;
 				this.xTile = 0;
@@ -290,7 +306,13 @@ window.onload = function() {
 		});
 		
         sideBar = Crafty.e('canvas,2D, sideBar').attr({x:400, y:0,z:0});
-        test = Crafty.e("2D, DOM, text").attr({x: 220, y: 200}).text("hello").font("30pt Arial");
+        unitSelectText = Crafty.e('DOM, 2D,color,text').color('#ffffff');
+		unitSelectText.attr({x:430, y:30,z:20}).font("12pt Arial");
+		unitSelectText.text('Unit:');
+        hpText = Crafty.e('DOM, 2D,color,text').color('#ffffff');
+		hpText.attr({x:430, y:50,z:20}).font("12pt Arial");
+
+		
 		Crafty.addEvent(this, Crafty.stage.elem, "mousedown", function(e){
 			x$('#console').top(consoleCount++ + ' Fired mouse down');
 			var column = Math.floor((e.clientX - Crafty.stage.x) / 40);
@@ -302,22 +324,31 @@ window.onload = function() {
 				if(unitBoard[row][column]==currentPiece){
 					destroyMoveOverlay();
 					currentPiece = null;
+					unitSelectText.text('Unit:');
+					hpText.text(' ');
 				}
 				
 				if(checkMovement(row, column, moveRange)){
 				// move selected unit 
 					currentPiece.placeUnit(row,column);
+					currentPiece.greyOut();
 					destroyMoveOverlay();
 					currentPiece = null;
+					unitSelectText.text('Unit:');
+					hpText.text(' ');					
 				}
                 
                 if(checkAttack(row,column, attackRange)){
  				// attack selected unit 
                     currentPiece.attack();
-					unitBoard[row][column].hurt(10);
+					unitBoard[row][column].hurt(1);
 					destroyMoveOverlay();
-					currentPiece = null;               
+					currentPiece.greyOut();
+					currentPiece = null;  
+					unitSelectText.text('Unit:');
+					hpText.text(' ');					
                 }
+
 			}else{
 				// focus on selected unit
 				if(unitBoard[row][column]!=null){
@@ -328,6 +359,8 @@ window.onload = function() {
                         if(currentPiece){
                             attackRange = currentPiece.findAttackRange();
                             if(attackRange.length>0)showAttackable(attackRange);
+							unitSelectText.text('Unit:'+currentPiece.colour+''+currentPiece.type);
+							hpText.text('HP:'+currentPiece.hp+'/'+currentPiece.maxHp);
                         }
 						
 					}else if(turn == 1 && unitBoard[row][column].colour=='blue'){
@@ -337,6 +370,8 @@ window.onload = function() {
                         if(currentPiece){
                             attackRange = currentPiece.findAttackRange();
                             if(attackRange.length>0)showAttackable(attackRange);
+							unitSelectText.text('Unit:'+currentPiece.colour+''+currentPiece.type);
+							hpText.text('HP:'+currentPiece.hp+'/'+currentPiece.maxHp);
                         }
 					}
 				}
@@ -349,6 +384,8 @@ window.onload = function() {
 			for(var j=0;j<unitBoard[i].length;j++){
 				if(unitBoard[i][j]!=null){
 					unitBoard[i][j].resetMovePoints();
+					unitBoard[i][j].addComponent(unitBoard[i][j].colour + unitBoard[i][j].type);
+					
 				}
 			}
 		}
