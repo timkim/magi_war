@@ -48,6 +48,18 @@ window.onload = function() {
     Crafty.sprite(100, "assets/sidebar.png",{
         sideBar:[0,0,2,4]
     });
+	
+    Crafty.sprite(10, "assets/tileBarHoriz.png",{
+        tileBarHoriz:[0,0,4,1]
+    });
+	
+    Crafty.sprite(10, "assets/tileBarVert.png",{
+        tileBarVert:[0,0,1,4]
+    });
+	
+    Crafty.sprite(10, "assets/corner.png",{
+        corner:[0,0,1,1]
+    });	
 	unitBoard = [[]],
 	terrainBoard = [[]],
 	gameBoardWidth = 400,
@@ -69,7 +81,9 @@ window.onload = function() {
     sideBar = null,
 	hpText = null,
 	unitSelectText = null,
-    test = null;
+    test = null,
+	redPieces=[],
+	bluePieces = [];
 	
 	var redPlayer = Crafty.e();
 	var bluePlayer = Crafty.e();
@@ -277,12 +291,39 @@ window.onload = function() {
 				if(i==0 || i==9 || j ==0 || j==9){
 					terrainBoard[i][j] = 'lava0';
 					Crafty.e('2D, canvas,lava0').attr({x: i * 40, y: j * 40, z: 2});
+					
+					//Crafty.e('2D, canvas,tileBarVert').attr({x: i * 40, y: j * 40, z: 3});
 				}else{
 					var theTile = createWalkableTerrain();
 					terrainBoard[i][j] = theTile;
 					Crafty.e('2D, canvas,'+theTile).attr({x: i * 40, y: j * 40, z: 2});
 				}
-
+				if(i==0){
+					Crafty.e('2D, canvas,tileBarVert').attr({x: i * 40, y: j * 40, z: 3});
+				}
+				if(i==9){
+					Crafty.e('2D, canvas,tileBarVert').attr({x: (i * 40)+30, y: j * 40, z: 3});
+				}
+				if(j==0){
+					Crafty.e('2D, canvas,tileBarHoriz').attr({x: i * 40, y: j * 40, z: 4});
+				}
+				if(j==9){
+					Crafty.e('2D, canvas,tileBarHoriz').attr({x: i * 40, y: (j * 40)+30, z: 4});
+				}
+				
+				if(i==0&&j==0){
+					Crafty.e('2D, canvas,corner').attr({x: i * 40, y: j * 40, z: 5});
+				}
+				if(i==0&&j==9){
+					Crafty.e('2D, canvas,corner').attr({x: i * 40, y: (j * 40)+30, z: 5});
+				}
+				if(i==9&&j==0){
+					Crafty.e('2D, canvas,corner').attr({x: (i * 40)+30, y: j * 40, z: 5});
+				}
+				if(i==9&&j==9){
+					Crafty.e('2D, canvas,corner').attr({x: (i * 40)+30, y: (j * 40)+30, z: 5});
+				}				
+				
 			}
 		}
 		var testUnit = Crafty.e('canvas, warrior, red, mouse');
@@ -308,7 +349,7 @@ window.onload = function() {
         sideBar = Crafty.e('canvas,2D, sideBar').attr({x:400, y:0,z:0});
         unitSelectText = Crafty.e('DOM, 2D,color,text').color('#ffffff');
 		unitSelectText.attr({x:430, y:30,z:20}).font("12pt Arial");
-		unitSelectText.text('Unit:');
+		unitSelectText.text('Unit:None');
         hpText = Crafty.e('DOM, 2D,color,text').color('#ffffff');
 		hpText.attr({x:430, y:50,z:20}).font("12pt Arial");
 
@@ -324,7 +365,7 @@ window.onload = function() {
 				if(unitBoard[row][column]==currentPiece){
 					destroyMoveOverlay();
 					currentPiece = null;
-					unitSelectText.text('Unit:');
+					unitSelectText.text('Unit:None');
 					hpText.text(' ');
 				}
 				
@@ -334,7 +375,7 @@ window.onload = function() {
 					currentPiece.greyOut();
 					destroyMoveOverlay();
 					currentPiece = null;
-					unitSelectText.text('Unit:');
+					unitSelectText.text('Unit:None');
 					hpText.text(' ');					
 				}
                 
@@ -345,7 +386,7 @@ window.onload = function() {
 					destroyMoveOverlay();
 					currentPiece.greyOut();
 					currentPiece = null;  
-					unitSelectText.text('Unit:');
+					unitSelectText.text('Unit:None');
 					hpText.text(' ');					
                 }
 
@@ -433,6 +474,9 @@ window.onload = function() {
 		resetAllUnitsMovePoints();
 	}
 	
+	function checkWin(){
+	
+	}
 	function initBoardValues(xTiles,yTiles){
 		var outerArray = [];
 		for(var i=0;i<xTiles;i++){
